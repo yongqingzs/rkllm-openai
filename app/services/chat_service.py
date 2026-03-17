@@ -8,6 +8,7 @@ import asyncio
 import logging
 from typing import Optional, AsyncGenerator, Any, Dict
 import numpy as np
+import requests
 from app.libs.rkllm import RKLLM, LLMCallState
 from app.libs.vision_encoder import VisionEncoder
 from app.core.config import settings
@@ -106,8 +107,9 @@ class ChatService:
 
                 image_url = part["image_url"]["url"]
                 image_data = None
+                
                 if image_url.startswith("data:image"):
-                    # Base64
+                    # Base64 encoded image
                     try:
                         base64_data = image_url.split(",")[1]
                         logger.debug("base64_data length: %d, first 50 chars: %s", len(base64_data), base64_data[:50])
@@ -116,8 +118,20 @@ class ChatService:
                     except Exception as e: # pylint: disable=broad-exception-caught
                         logger.error("Failed to decode base64 image: %s", e, exc_info=True)
                         continue
+                        
+                elif image_url.startswith(("http://", "https://")):
+                    # Download image from URL
+                    try:
+                        logger.info("Downloading image from URL: %s", image_url)
+                        response = requests.get(image_url, timeout=30)
+                        response.raise_for_status()
+                        image_data = response.content
+                        logger.info("Successfully downloaded image from URL, size: %d bytes", len(image_data))
+                    except requests.RequestException as e: # pylint: disable=broad-exception-caught
+                        logger.error("Failed to download image from URL: %s", e, exc_info=True)
+                        continue
                 else:
-                    logger.warning("External image URLs not yet supported, use base64")
+                    logger.warning("Unsupported image URL format: %s", image_url)
                     continue
 
                 if image_data:
