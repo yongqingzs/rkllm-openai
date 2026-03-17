@@ -35,11 +35,30 @@ class VisionEncoder:
 
     def preprocess(self, image_data: bytes) -> np.ndarray:
         """Preprocess image from bytes."""
-        # Decode image
+        # Validate input
+        if not isinstance(image_data, (bytes, bytearray)):
+            raise TypeError(f"image_data must be bytes, got {type(image_data)}")
+        if len(image_data) == 0:
+            raise ValueError("image_data is empty")
+        
+        logger.debug(f"preprocess: received image_data len={len(image_data)}, first 16 bytes={image_data[:16].hex()}")
+        
+        # Try cv2 decode
         nparr = np.frombuffer(image_data, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Fallback to PIL if cv2 fails
         if img is None:
-            raise ValueError("Failed to decode image")
+            logger.warning("cv2.imdecode failed, trying PIL fallback...")
+            try:
+                from PIL import Image
+                import io
+                pil_img = Image.open(io.BytesIO(image_data)).convert("RGB")
+                img = cv2.cvtColor(np.asarray(pil_img), cv2.COLOR_RGB2BGR)
+                logger.info("PIL fallback succeeded")
+            except Exception as pil_error:
+                logger.error(f"PIL fallback also failed: {pil_error}")
+                raise ValueError(f"Failed to decode image with both cv2 and PIL: {pil_error}") from pil_error
 
         # BGR to RGB
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -54,7 +73,11 @@ class VisionEncoder:
 
     def encode(self, image_data: bytes):
         """Encode image and return embeddings and metadata."""
-        processed_img = self.preprocess(image_data)
+        try:
+            processed_img = self.preprocess(image_data)
+        except Exception as e:
+            logger.error(f"Failed to preprocess image: {e}", exc_info=True)
+            raise
         embeddings = self.rknn.run(processed_img.tobytes())
 
         return {
