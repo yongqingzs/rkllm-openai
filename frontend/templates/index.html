@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="lemonade">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RKLLM Vision Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.5.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        :root {
+            --rounded-box: 0.75rem;
+            --rounded-btn: 0.5rem;
+        }
+        .chat-message {
+            animation: slideIn 0.3s ease-in-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .image-preview {
+            max-width: 280px;
+            max-height: 280px;
+            border-radius: 8px;
+            object-fit: contain;
+            margin-top: 8px;
+        }
+        .msg-ai {
+            background: linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 100%);
+            border-left: 4px solid #0891b2;
+        }
+        .msg-user {
+            background: linear-gradient(135deg, #84cc16 0%, #a3e635 100%);
+            color: #1a2e0f;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-white via-blue-50 to-cyan-50 min-h-screen">
+    <div class="h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass-effect border-b border-blue-200 shadow-lg sticky top-0 z-10 bg-white/90">
+            <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">🤖 RKLLM Vision Chat</h1>
+                    <p class="text-sm text-gray-600 mt-1">rk3588 端侧大模型 Man, what can i say?</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-700">Model: <span id="model-name" class="font-mono font-semibold text-cyan-600">loading...</span></p>
+                    <p class="text-xs text-gray-500 mt-1" id="status">✨ 就绪</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Chat Messages -->
+            <div class="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white to-blue-50">
+                <div id="chat-messages" class="space-y-4 max-w-4xl mx-auto">
+                    <!-- Messages will be inserted here -->
+                    <div class="text-center py-12">
+                        <p class="text-3xl mb-3">👋</p>
+                        <p class="text-xl font-bold text-gray-800 mb-2">欢迎使用 RKLLM Chat</p>
+                        <p class="text-gray-600">输入文本或上传图片开始对话</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="border-t border-blue-200 p-6 bg-white shadow-lg">
+                <div class="max-w-4xl mx-auto space-y-4">
+                    <div id="image-preview-container" class="hidden flex gap-2 flex-wrap">
+                        <div class="relative inline-block">
+                            <img id="image-preview" class="image-preview border-2 border-cyan-300 rounded-lg" alt="preview">
+                            <button onclick="clearImage()" class="btn btn-sm btn-circle btn-error absolute -top-3 -right-3">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Input Form -->
+                    <div class="flex gap-3">
+                        <!-- File Upload -->
+                        <div class="relative">
+                            <input 
+                                type="file" 
+                                id="image-input" 
+                                accept="image/*" 
+                                class="hidden"
+                                onchange="handleImageSelect(event)"
+                            >
+                            <button 
+                                onclick="document.getElementById('image-input').click()"
+                                class="btn btn-outline btn-primary btn-lg"
+                                title="上传图片"
+                            >
+                                📸 图片
+                            </button>
+                        </div>
+
+                        <!-- Text Input -->
+                        <input 
+                            type="text" 
+                            id="message-input"
+                            placeholder="输入你的问题..."
+                            class="flex-1 input input-bordered input-lg focus:input-primary text-gray-800 placeholder-gray-500"
+                            onkeypress="if(event.key==='Enter') sendMessage()"
+                        >
+
+                        <!-- Send Button -->
+                        <button 
+                            onclick="sendMessage()"
+                            class="btn btn-primary btn-lg gap-2"
+                            id="send-button"
+                        >
+                            💬 发送
+                        </button>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="char-count" class="text-gray-600">0/1000 字符</span>
+                        <span id="error-message" class="text-error hidden flex items-center gap-1"></span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='api.js') }}"></script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
