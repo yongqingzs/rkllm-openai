@@ -10,3 +10,5 @@ wheels/
 # Virtual environments
 .venv
 # demo/
+result.png
+demo/assets/

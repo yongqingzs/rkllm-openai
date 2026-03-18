@@ -61,7 +61,7 @@ API_KEY: null
 # ==============================================================================
 
 MAX_CONTEXT_LEN: 4096
-MAX_NEW_TOKENS: 4096
+MAX_NEW_TOKENS: 2048
 TOP_K: 1
 TOP_P: 0.9
 TEMPERATURE: 0.8
